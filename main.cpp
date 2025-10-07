@@ -12,7 +12,7 @@ int main() {
     image.file_name = "new_image.ppm";
     Settings settings;
 
-    Renderer::render_ispc(settings, image);
+    Renderer::render(settings, image);
 
     std::ofstream ofs(image.file_name, std::ios::binary);
     ofs << "P6\n" << IMAGE_WIDTH << " " << IMAGE_HEIGHT << "\n255\n";
