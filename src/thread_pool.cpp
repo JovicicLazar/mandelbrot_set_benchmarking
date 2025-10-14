@@ -23,12 +23,23 @@ ThreadPool::ThreadPool(const unsigned int thread_number)
 
                     task = std::move(this->m_tasks.front());
                     this->m_tasks.pop();
+                    ++m_active_tasks;
                 }
 
                 task(); 
+
+                --m_active_tasks;
+                m_cv.notify_all();
             }
         });
     }
+}
+
+void ThreadPool::wait() {
+    std::unique_lock<std::mutex> lock(m_q_mutex);
+    m_cv.wait(lock, [this] { 
+        return m_tasks.empty() && (m_active_tasks == 0); 
+    });
 }
 
 ThreadPool::~ThreadPool()

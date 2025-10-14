@@ -46,3 +46,6 @@
 main
 
 .vscode/
+
+build/
+benchmark_images/

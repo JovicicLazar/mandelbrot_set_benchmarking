@@ -18,8 +18,6 @@ public:
 
     void render_parallel_ispc(Image& image);
 
-    void render_parallel_ispc_optimized(Image& image);
-
 private:
     std::shared_ptr<ThreadPool> m_pool;
     uint32_t m_max_iter;

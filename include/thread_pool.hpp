@@ -7,6 +7,7 @@
 #include <thread>
 #include <functional>
 #include <queue>
+#include <atomic>
 
 class ThreadPool
 {
@@ -16,6 +17,8 @@ public:
 
     template <typename F, typename... Args>
     void enqueue(F &&f, Args &&...args);
+
+    void wait();
 
     ThreadPool(const ThreadPool &) = delete;
     ThreadPool &operator=(const ThreadPool &) = delete;
@@ -27,6 +30,7 @@ private:
     std::queue<std::function<void()>> m_tasks;
     std::mutex m_q_mutex;
     std::condition_variable m_cv;
+    std::atomic<int> m_active_tasks{0};
     bool m_stop = false;
 };
 

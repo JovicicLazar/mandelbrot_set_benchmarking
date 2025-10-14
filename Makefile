@@ -3,44 +3,63 @@ ISPC = ispc
 
 SRC = src
 INCLUDE = include
+BUILD_DIR = build
 
-CXXFLAGS = -std=c++17 -O3 -Wall -I$(INCLUDE)
+CXXFLAGS = -std=c++17 -O3 -Wall -fPIC -I$(INCLUDE)
 ISPCFLAGS = --target=avx2-i32x8 -O3 -I$(INCLUDE)
 
 SRCS = main.cpp $(SRC)/renderer.cpp $(SRC)/thread_pool.cpp $(SRC)/image_writer.cpp
-ISPC_SRCS = $(SRC)/mandelbrot.ispc $(SRC)/mandelbrot_parallel.ispc $(SRC)/mandelbrot_parallel_optimized.ispc
+ISPC_SRCS = $(SRC)/mandelbrot.ispc $(SRC)/mandelbrot_parallel.ispc
+API_SRC = $(SRC)/mandelbrot_api.cpp
 
-OBJS = main.o renderer.o thread_pool.o image_writer.o mandelbrot.o mandelbrot_parallel.o mandelbrot_parallel_optimized.o
+ISPC_OBJS = $(BUILD_DIR)/mandelbrot.o $(BUILD_DIR)/mandelbrot_parallel.o
 
-TARGET = mandelbrot
+CPP_OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/renderer.o $(BUILD_DIR)/thread_pool.o \
+           $(BUILD_DIR)/image_writer.o
 
-all: mandelbrot.o mandelbrot_parallel.o mandelbrot_parallel_optimized.o $(TARGET)
+OBJS = $(ISPC_OBJS) $(CPP_OBJS)
+
+TARGET = $(BUILD_DIR)/mandelbrot
+SHARED_TARGET = $(BUILD_DIR)/libmandelbrot.so
+
+all: $(TARGET)
+
+$(BUILD_DIR):
+	@mkdir -p $(BUILD_DIR)
 
 $(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJS)
+	$(CXX) $(CXXFLAGS) -o $@ $^
 
-mandelbrot.o: $(SRC)/mandelbrot.ispc
+# --- ISPC Compilation Rules (built first) ---
+$(BUILD_DIR)/mandelbrot.o: $(SRC)/mandelbrot.ispc | $(BUILD_DIR)
 	$(ISPC) $(ISPCFLAGS) $< -o $@ -h $(INCLUDE)/mandelbrot_ispc.h
 
-mandelbrot_parallel.o: $(SRC)/mandelbrot_parallel.ispc
+$(BUILD_DIR)/mandelbrot_parallel.o: $(SRC)/mandelbrot_parallel.ispc | $(BUILD_DIR)
 	$(ISPC) $(ISPCFLAGS) $< -o $@ -h $(INCLUDE)/mandelbrot_parallel.h
 
-mandelbrot_parallel_optimized.o: $(SRC)/mandelbrot_parallel_optimized.ispc
-	$(ISPC) $(ISPCFLAGS) $< -o $@ -h $(INCLUDE)/mandelbrot_parallel_optimized.h
-
-main.o: main.cpp
+# --- C++ Compilation Rules (depend on ISPC headers) ---
+$(BUILD_DIR)/main.o: main.cpp $(INCLUDE)/mandelbrot_ispc.h | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-renderer.o: $(SRC)/renderer.cpp
+$(BUILD_DIR)/renderer.o: $(SRC)/renderer.cpp $(INCLUDE)/mandelbrot_ispc.h \
+                         $(INCLUDE)/mandelbrot_parallel.h | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-thread_pool.o: $(SRC)/thread_pool.cpp
+$(BUILD_DIR)/thread_pool.o: $(SRC)/thread_pool.cpp | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-image_writer.o: $(SRC)/image_writer.cpp
+$(BUILD_DIR)/image_writer.o: $(SRC)/image_writer.cpp | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+# --- Python Shared Library ---
+$(SHARED_TARGET): $(ISPC_OBJS) $(API_SRC) $(CPP_OBJS) | $(BUILD_DIR)
+	$(CXX) -shared $(CXXFLAGS) -o $@ $^
+
+# Convenience target for shared library
+lib: $(SHARED_TARGET)
+
+# Clean
 clean:
-	rm -f $(OBJS) $(TARGET) $(INCLUDE)/mandelbrot_parallel.h $(INCLUDE)/mandelbrot_ispc.h $(INCLUDE)/mandelbrot_parallel_optimized.h
+	rm -rf $(BUILD_DIR) $(INCLUDE)/mandelbrot_parallel.h $(INCLUDE)/mandelbrot_ispc.h
 
-.PHONY: all clean 
+.PHONY: all lib clean

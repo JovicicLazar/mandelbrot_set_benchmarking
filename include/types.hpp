@@ -9,7 +9,7 @@
 
 constexpr uint32_t IMAGE_WIDTH = 3000;
 constexpr uint32_t IMAGE_HEIGHT = 3000;
-constexpr uint32_t MAX_ITER = 25;
+constexpr uint32_t MAX_ITER = 100;
 constexpr double X_MAX = 1.0;
 constexpr double X_MIN = -2.0;
 constexpr double Y_MAX = 2.0;
