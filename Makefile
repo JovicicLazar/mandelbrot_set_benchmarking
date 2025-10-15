@@ -8,14 +8,14 @@ BUILD_DIR = build
 CXXFLAGS = -std=c++17 -O3 -Wall -fPIC -I$(INCLUDE)
 ISPCFLAGS = --target=avx2-i32x8 -O3 -I$(INCLUDE)
 
-SRCS = main.cpp $(SRC)/renderer.cpp $(SRC)/thread_pool.cpp $(SRC)/image_writer.cpp
+SRCS = main.cpp $(SRC)/renderer.cpp $(SRC)/thread_pool.cpp $(SRC)/image_writer.cpp $(SRC)arg_parser.cpp
 ISPC_SRCS = $(SRC)/mandelbrot.ispc $(SRC)/mandelbrot_parallel.ispc
 API_SRC = $(SRC)/mandelbrot_api.cpp
 
 ISPC_OBJS = $(BUILD_DIR)/mandelbrot.o $(BUILD_DIR)/mandelbrot_parallel.o
 
 CPP_OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/renderer.o $(BUILD_DIR)/thread_pool.o \
-           $(BUILD_DIR)/image_writer.o
+           $(BUILD_DIR)/image_writer.o $(BUILD_DIR)/arg_parser.o
 
 OBJS = $(ISPC_OBJS) $(CPP_OBJS)
 
@@ -49,6 +49,9 @@ $(BUILD_DIR)/thread_pool.o: $(SRC)/thread_pool.cpp | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/image_writer.o: $(SRC)/image_writer.cpp | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/arg_parser.o: $(SRC)/arg_parser.cpp | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # --- Python Shared Library ---

@@ -26,7 +26,7 @@ struct Settings {
 struct Image {
     uint32_t image_width = IMAGE_WIDTH;
     uint32_t image_height = IMAGE_HEIGHT;
-    std::string file_name;
+    std::string file_name = "image.bmp";
     std::vector<uint8_t> image_data;
 
     void save_image() {

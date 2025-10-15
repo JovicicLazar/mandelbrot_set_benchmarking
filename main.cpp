@@ -3,16 +3,29 @@
 #include <complex>
 #include <vector>
 
-#include "renderer.hpp"
-#include "types.hpp"
+#include "include/renderer.hpp"
+#include "include/types.hpp"
+#include "include/arg_parser.hpp"
 
-int main() {
-    Image image;
-    image.file_name = "new_image.ppm";
+int main(int argc, char *argv[]) {
     Settings settings;
-    Renderer renderer(settings);
-    renderer.render_parallel_ispc(image);
-    image.save_image();
-    std::cout << "Wrote mandelbrot.ppm\n";
+    Image image;
+    
+    if (!ArgParser::parse_args(argc, argv, settings, image)) {
+        return 1;
+    }
+    
+    try {
+        Renderer renderer(settings);
+        renderer.render_parallel_ispc(image);
+        image.save_image();
+        
+        std::cout << "Image saved to: " << image.file_name << "\n";
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << "\n";
+        return 1;
+    }
+    
     return 0;
 }
